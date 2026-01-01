@@ -1,6 +1,6 @@
 # Cloudflare AI Chat App
 
-[![[cloudflarebutton]]](https://deploy.workers.cloudflare.com)
+[![[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/lumo-notes-ai-enhanced-workspace)]](https://deploy.workers.cloudflare.com)
 
 A production-ready full-stack AI chat application powered by Cloudflare Workers and Durable Objects. Features multi-session conversations, real-time streaming responses, tool calling (web search, weather, and extensible MCP tools), and a modern responsive UI built with React, Tailwind CSS, and shadcn/ui.
 
@@ -113,7 +113,7 @@ This builds the frontend assets and deploys the Worker with SPA routing.
 3. Bind Durable Object namespaces in Wrangler dashboard.
 4. Assets are automatically served from KV (via `assets` config).
 
-[![[cloudflarebutton]]](https://deploy.workers.cloudflare.com)
+[![[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/lumo-notes-ai-enhanced-workspace)]](https://deploy.workers.cloudflare.com)
 
 **Note**: Update `wrangler.jsonc` migrations for production. Ensure AI Gateway and API keys are set as Worker variables/secrets.
 
