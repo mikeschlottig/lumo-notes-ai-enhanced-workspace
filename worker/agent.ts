@@ -37,14 +37,14 @@ export class ChatAgent extends Agent<Env, ChatState> {
         });
       }
       if (method === 'PUT' && url.pathname === '/document') {
-        const { content, title } = await request.json();
+        const body = (await request.json()) as { content?: any; title?: string; isFavorite?: boolean; coverImage?: string; icon?: string };
         const nextState = { ...this.state, lastModified: Date.now() };
-        if (content !== undefined) nextState.documentContent = content;
-        if (title !== undefined) nextState.title = title;
+        if (body.content !== undefined) nextState.documentContent = body.content;
+        if (body.title !== undefined) nextState.title = body.title;
         this.setState(nextState);
-        if (title) {
+        if (body.title) {
           const controller = this.env.APP_CONTROLLER.get(this.env.APP_CONTROLLER.idFromName("controller"));
-          await controller.updateSessionTitle(this.name, title);
+          await controller.updateSessionTitle(this.name, body.title);
         }
         return Response.json({ success: true });
       }
