@@ -21,7 +21,7 @@ export function DocumentPage() {
     }
   }, [id, setDoc]);
   const wordCount = useMemo(() => {
-    if (!currentDoc?.content) return 0;
+    if (!currentDoc?.content || typeof currentDoc.content !== 'string') return 0;
     const text = currentDoc.content.replace(/<[^>]*>/g, ' ');
     return text.split(/\s+/).filter(Boolean).length;
   }, [currentDoc?.content]);
@@ -47,7 +47,11 @@ export function DocumentPage() {
               variant="ghost"
               size="icon"
               className={`h-8 w-8 transition-colors ${currentDoc?.isFavorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground'}`}
-              onClick={() => updateDoc({ isFavorite: !currentDoc?.isFavorite })}
+              onClick={() => {
+                if (currentDoc) {
+                  updateDoc({ isFavorite: !currentDoc.isFavorite });
+                }
+              }}
             >
               <Star className={`h-4 w-4 ${currentDoc?.isFavorite ? 'fill-current' : ''}`} />
             </Button>
