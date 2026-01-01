@@ -1,100 +1,82 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Editor } from '@/components/editor/Editor';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useDocumentStore } from '@/store/use-document-store';
-import { Sparkles, PanelRight, Star, Clock, FileText } from 'lucide-react';
+import { Sparkles, PanelRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { AIChatSidebar } from '@/components/AIChatSidebar';
 export function DocumentPage() {
   const { id } = useParams();
   const setDoc = useDocumentStore(s => s.setCurrentDocument);
   const isAiOpen = useDocumentStore(s => s.isAiPanelOpen);
   const toggleAi = useDocumentStore(s => s.toggleAiPanel);
   const currentDoc = useDocumentStore(s => s.currentDocument);
-  const updateDoc = useDocumentStore(s => s.updateCurrentDocument);
   useEffect(() => {
-    if (id) {
-      setDoc(id);
-    }
+    if (id) setDoc(id);
   }, [id, setDoc]);
-  const wordCount = useMemo(() => {
-    if (!currentDoc?.content || typeof currentDoc.content !== 'string') return 0;
-    const text = currentDoc.content.replace(/<[^>]*>/g, ' ');
-    return text.split(/\s+/).filter(Boolean).length;
-  }, [currentDoc?.content]);
-  const readTime = Math.ceil(wordCount / 200);
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="relative flex h-screen overflow-hidden bg-background">
-        <header className="flex h-14 items-center justify-between border-b px-4 border-border/40 shrink-0 bg-background/50 backdrop-blur-md z-20">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="-ml-1 h-8 w-8" />
-            <div className="h-4 w-[1px] bg-border/40 mx-1" />
-            <nav className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <span>Private</span>
-              <span>/</span>
-              <span className="text-foreground truncate max-w-[150px] md:max-w-[300px]">
-                {currentDoc?.title || "Untitled"}
-              </span>
-            </nav>
+        <header className="flex h-12 items-center justify-between border-b px-4 border-border/40">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="h-4 w-[1px] bg-border/60 mx-1" />
+            <span className="text-xs font-medium text-muted-foreground truncate max-w-[200px]">
+              {currentDoc?.title || "Untitled Page"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 transition-colors ${currentDoc?.isFavorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground'}`}
-              onClick={() => {
-                if (currentDoc) {
-                  updateDoc({ isFavorite: !currentDoc.isFavorite });
-                }
-              }}
-            >
-              <Star className={`h-4 w-4 ${currentDoc?.isFavorite ? 'fill-current' : ''}`} />
-            </Button>
-            <div className="h-4 w-[1px] bg-border/40 mx-1" />
             <ThemeToggle className="static" />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={toggleAi}
-              className={`h-8 gap-2 rounded-full transition-all duration-300 ${isAiOpen ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-secondary text-muted-foreground'}`}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleAi} 
+              className={`gap-2 ${isAiOpen ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline text-[11px] font-bold uppercase tracking-wider">Assistant</span>
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Ask AI</span>
             </Button>
-            <div className="h-4 w-[1px] bg-border/40 mx-1" />
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+            <div className="h-4 w-[1px] bg-border/60 mx-1" />
+            <Button variant="ghost" size="icon" className="text-muted-foreground">
               <PanelRight className="h-4 w-4" />
             </Button>
           </div>
         </header>
-        <div className="flex flex-1 overflow-hidden">
-          <main className="flex-1 overflow-y-auto custom-scrollbar bg-background selection:bg-primary/10">
-            <Editor />
-          </main>
-          {isAiOpen && id && (
-            <AIChatSidebar id={id} />
-          )}
+        <main className="flex-1 overflow-y-auto custom-scrollbar">
+          <Editor />
+        </main>
+        {/* AI Sidebar Placeholder - To be implemented in Phase 2 */}
+        {isAiOpen && (
+          <aside className="w-80 border-l border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-4 border-b bg-background/50 flex items-center justify-between">
+              <span className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                AI Assistant
+              </span>
+              <Button variant="ghost" size="icon" onClick={toggleAi}>
+                <span className="sr-only">Close</span>
+                ×
+              </Button>
+            </div>
+            <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Sparkles className="h-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">AI Assistant Coming Soon</h3>
+                <p className="text-xs text-muted-foreground mt-1 px-4">
+                  In Phase 2, this sidepanel will let you chat with your document, summarize content, and generate blocks.
+                </p>
+              </div>
+            </div>
+          </aside>
+        )}
+        <div className="fixed bottom-4 right-4 text-[10px] text-muted-foreground/40 pointer-events-none">
+          Lumo v1.0 • Phase 1 Core
         </div>
-        <footer className="h-8 border-t bg-background/50 backdrop-blur-sm px-4 flex items-center justify-between text-[10px] text-muted-foreground/60 font-medium z-10 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3" />
-              {wordCount} words
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3 w-3" />
-              {readTime} min read
-            </div>
-          </div>
-          <div className="flex items-center gap-2 opacity-50">
-            Lumo v1.0 • Block Engine Active
-          </div>
-        </footer>
       </SidebarInset>
     </SidebarProvider>
   );
