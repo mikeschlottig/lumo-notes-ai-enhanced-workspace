@@ -1,21 +1,41 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Link from '@tiptap/extension-link';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
 import { useDocumentStore } from '@/store/use-document-store';
 import { useDebounce } from 'react-use';
+import { SlashCommand } from './extensions/slash-command';
+const lowlight = createLowlight(common);
 export function Editor() {
   const content = useDocumentStore(s => s.currentDocument?.content);
   const title = useDocumentStore(s => s.currentDocument?.title);
   const updateDoc = useDocumentStore(s => s.updateCurrentDocument);
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false, // Replaced by CodeBlockLowlight
+      }),
       Typography,
       Placeholder.configure({
         placeholder: "Type '/' for commands...",
       }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      Link.configure({
+        openOnClick: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+      }),
+      SlashCommand,
     ],
     content: content || '',
     editorProps: {
@@ -24,9 +44,8 @@ export function Editor() {
       },
     },
   });
-  // Handle incoming content updates (e.g. from switching pages)
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== content) {
+    if (editor && content !== undefined && editor.getHTML() !== content) {
       editor.commands.setContent(content);
     }
   }, [editor, content]);

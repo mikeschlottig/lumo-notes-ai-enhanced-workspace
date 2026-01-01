@@ -26,14 +26,28 @@ export class ChatAgent extends Agent<Env, ChatState> {
     try {
       const url = new URL(request.url);
       const method = request.method;
-      // Document API
       if (method === 'GET' && url.pathname === '/document') {
-        return this.handleGetDocument();
+        return Response.json({
+          success: true,
+          data: {
+            content: this.state.documentContent,
+            title: this.state.title,
+            lastModified: this.state.lastModified
+          }
+        });
       }
       if (method === 'PUT' && url.pathname === '/document') {
-        return this.handleUpdateDocument(await request.json());
+        const { content, title } = await request.json();
+        const nextState = { ...this.state, lastModified: Date.now() };
+        if (content !== undefined) nextState.documentContent = content;
+        if (title !== undefined) nextState.title = title;
+        this.setState(nextState);
+        if (title) {
+          const controller = this.env.APP_CONTROLLER.get(this.env.APP_CONTROLLER.idFromName("controller"));
+          await controller.updateSessionTitle(this.name, title);
+        }
+        return Response.json({ success: true });
       }
-      // Existing Chat API
       if (method === 'GET' && url.pathname === '/messages') {
         return Response.json({ success: true, data: this.state });
       }
@@ -46,32 +60,9 @@ export class ChatAgent extends Agent<Env, ChatState> {
       }
       return Response.json({ success: false, error: API_RESPONSES.NOT_FOUND }, { status: 404 });
     } catch (error) {
-      console.error('Request handling error:', error);
+      console.error('Request error:', error);
       return Response.json({ success: false, error: API_RESPONSES.INTERNAL_ERROR }, { status: 500 });
     }
-  }
-  private handleGetDocument(): Response {
-    return Response.json({
-      success: true,
-      data: {
-        content: this.state.documentContent,
-        title: this.state.title,
-        lastModified: this.state.lastModified
-      }
-    });
-  }
-  private async handleUpdateDocument(body: { content?: any; title?: string }): Promise<Response> {
-    const { content, title } = body;
-    const nextState = { ...this.state, lastModified: Date.now() };
-    if (content !== undefined) nextState.documentContent = content;
-    if (title !== undefined) nextState.title = title;
-    this.setState(nextState);
-    // Sync title to AppController for the sidebar list
-    if (title) {
-      const controller = this.env.APP_CONTROLLER.get(this.env.APP_CONTROLLER.idFromName("controller"));
-      await controller.updateSessionTitle(this.name, title);
-    }
-    return Response.json({ success: true });
   }
   private async handleChatMessage(body: { message: string; model?: string; stream?: boolean }): Promise<Response> {
     const { message, model, stream } = body;
@@ -81,7 +72,8 @@ export class ChatAgent extends Agent<Env, ChatState> {
       this.chatHandler?.updateModel(model);
     }
     const userMessage = createMessage('user', message.trim());
-    this.setState({ ...this.state, messages: [...this.state.messages, userMessage], isProcessing: true });
+    const history = [...this.state.messages, userMessage];
+    this.setState({ ...this.state, messages: history, isProcessing: true });
     try {
       if (stream) {
         const { readable, writable } = new TransformStream();
@@ -91,20 +83,21 @@ export class ChatAgent extends Agent<Env, ChatState> {
           try {
             const response = await this.chatHandler!.processMessage(
               message,
-              this.state.messages,
+              history.slice(0, -1),
+              this.state.documentContent,
               (chunk: string) => writer.write(encoder.encode(chunk))
             );
             const assistantMsg = createMessage('assistant', response.content, response.toolCalls);
-            this.setState({ ...this.state, messages: [...this.state.messages, assistantMsg], isProcessing: false });
+            this.setState({ ...this.state, messages: [...history, assistantMsg], isProcessing: false });
           } finally {
             writer.close();
           }
         })();
         return createStreamResponse(readable);
       }
-      const response = await this.chatHandler!.processMessage(message, this.state.messages);
+      const response = await this.chatHandler!.processMessage(message, history.slice(0, -1), this.state.documentContent);
       const assistantMsg = createMessage('assistant', response.content, response.toolCalls);
-      this.setState({ ...this.state, messages: [...this.state.messages, assistantMsg], isProcessing: false });
+      this.setState({ ...this.state, messages: [...history, assistantMsg], isProcessing: false });
       return Response.json({ success: true, data: this.state });
     } catch (error) {
       this.setState({ ...this.state, isProcessing: false });

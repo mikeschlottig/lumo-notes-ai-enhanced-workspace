@@ -1,24 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Editor, Range, Extension } from '@tiptap/core';
+import { ReactRenderer } from '@tiptap/react';
 import Suggestion from '@tiptap/suggestion';
-import { 
-  Heading1, Heading2, Heading3, 
-  List, ListOrdered, Quote, Code, 
-  Text, CheckSquare 
+import {
+  Heading1, Heading2, Heading3,
+  List, ListOrdered, Quote, Code,
+  Type, CheckSquare
 } from 'lucide-react';
-import { 
-  Command, 
-  CommandGroup, 
-  CommandItem, 
-  CommandList 
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList
 } from '@/components/ui/command';
-const CommandListRenderer = (props: any) => {
+const CommandListRenderer = forwardRef((props: any, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectItem = useCallback((index: number) => {
     const item = props.items[index];
     if (item) props.command(item);
   }, [props]);
+  useImperativeHandle(ref, () => ({
+    onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+      if (event.key === 'ArrowUp') {
+        setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length);
+        return true;
+      }
+      if (event.key === 'ArrowDown') {
+        setSelectedIndex((selectedIndex + 1) % props.items.length);
+        return true;
+      }
+      if (event.key === 'Enter') {
+        selectItem(selectedIndex);
+        return true;
+      }
+      return false;
+    },
+  }));
   useEffect(() => setSelectedIndex(0), [props.items]);
+  if (!props.items.length) return null;
   return (
     <div className="z-50 min-w-[200px] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
       <CommandList>
@@ -39,7 +58,8 @@ const CommandListRenderer = (props: any) => {
       </CommandList>
     </div>
   );
-};
+});
+CommandListRenderer.displayName = 'CommandListRenderer';
 export const SlashCommand = Extension.create({
   name: 'slashCommand',
   addOptions() {
@@ -61,7 +81,7 @@ export const SlashCommand = Extension.create({
           return [
             {
               title: 'Text',
-              icon: <Text className="w-3 h-3" />,
+              icon: <Type className="w-3 h-3" />,
               command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).setNode('paragraph').run();
               },
@@ -119,26 +139,24 @@ export const SlashCommand = Extension.create({
         },
         render: () => {
           let component: any;
-          let popup: any;
           return {
             onStart: (props: any) => {
-              component = new CommandListRenderer(props);
-              // In a real implementation, we'd use tippy.js or a custom positioning logic here.
-              // For brevity, we assume the component renders itself in a portal or fixed location.
+              component = new ReactRenderer(CommandListRenderer, {
+                props,
+                editor: props.editor,
+              });
             },
-            onUpdate: (props: any) => {
-              if (component) component.updateProps(props);
+            onUpdate(props: any) {
+              component.updateProps(props);
             },
-            onKeyDown: (props: any) => {
+            onKeyDown(props: any) {
               if (props.event.key === 'Escape') {
-                popup[0].hide();
                 return true;
               }
-              return component?.ref?.onKeyDown(props);
+              return component.ref?.onKeyDown(props);
             },
-            onExit: () => {
-              popup?.[0].destroy();
-              component?.destroy();
+            onExit() {
+              component.destroy();
             },
           };
         },
