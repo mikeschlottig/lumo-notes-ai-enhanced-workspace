@@ -7,20 +7,16 @@ import {
   List, ListOrdered, Quote, Code,
   Type, CheckSquare
 } from 'lucide-react';
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command';
+
 const CommandListRenderer = forwardRef((props: any, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectItem = useCallback((index: number) => {
     const item = props.items[index];
     if (item) props.command(item);
-  }, [props]);
+  }, [props.items?.length]);
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+      if (!props.items?.length) return false;
       if (event.key === 'ArrowUp') {
         setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length);
         return true;
@@ -40,22 +36,26 @@ const CommandListRenderer = forwardRef((props: any, ref) => {
   if (!props.items.length) return null;
   return (
     <div className="z-50 min-w-[200px] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
-      <CommandList>
-        <CommandGroup heading="Blocks">
-          {props.items.map((item: any, index: number) => (
-            <CommandItem
-              key={index}
-              onSelect={() => selectItem(index)}
-              className={`flex items-center gap-2 px-2 py-1 text-sm cursor-pointer ${selectedIndex === index ? 'bg-accent text-accent-foreground' : ''}`}
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded border bg-background">
-                {item.icon}
-              </div>
-              <span>{item.title}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
+      <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-2">
+          Blocks
+        </div>
+        {props.items.map((item: any, index: number) => (
+          <div
+            key={index}
+            role="option"
+            aria-selected={selectedIndex === index}
+            className={`relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground ${selectedIndex === index ? 'bg-accent text-accent-foreground' : ''}`}
+            onClick={() => selectItem(index)}
+            onMouseEnter={() => setSelectedIndex(index)}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded border bg-background">
+              {item.icon}
+            </div>
+            <span>{item.title}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 });
@@ -75,7 +75,6 @@ export const SlashCommand = Extension.create({
   addProseMirrorPlugins() {
     return [
       Suggestion({
-        editor: this.editor,
         ...this.options.suggestion,
         items: ({ query }: { query: string }) => {
           return [
