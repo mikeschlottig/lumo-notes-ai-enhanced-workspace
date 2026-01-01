@@ -90,7 +90,8 @@ function runSetupCommands() {
     "bun add @tiptap/extension-code-block-lowlight@^2.7.0",
     "bun add lowlight@^2.9.0",
     "bun install @tiptap/suggestion",
-    "bun add @tiptap/suggestion@^2.7.0"
+    "bun add @tiptap/suggestion@^2.7.0",
+    "bun add @tiptap/extension-color @tiptap/extension-text-style"
 ];
     
     if (commands.length === 0) {
