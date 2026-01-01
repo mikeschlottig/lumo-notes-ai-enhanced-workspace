@@ -7,14 +7,15 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import { all, createLowlight } from 'lowlight';
+import { lowlight } from 'lowlight/lib/all.js';
+
 import { useDocumentStore } from '@/store/use-document-store';
 import { useDebounce } from 'react-use';
 import { SlashCommand } from './extensions/slash-command';
 import { ImagePlus, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-const lowlight = createLowlight(all);
+
 export function Editor() {
   const content = useDocumentStore(s => s.currentDocument?.content);
   const title = useDocumentStore(s => s.currentDocument?.title);
@@ -63,7 +64,7 @@ export function Editor() {
       }
     },
     1000,
-    [editor?.getHTML()]
+    [editor]
   );
   if (!editor) return null;
   return (
@@ -93,7 +94,7 @@ export function Editor() {
           <PopoverContent className="w-64 p-2">
             <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Select Icon</div>
             <div className="grid grid-cols-6 gap-1">
-              {['📄', '📝', '💡', '🚀', '🔥', '⭐️', '🎯', '🌈', '��', '💼', '🏡', '🌍'].map(emoji => (
+              {['📄', '📝', '💡', '🚀', '🔥', '⭐️', '🎯', '🌈', '💎', '💼', '🏡', '🌍'].map(emoji => (
                 <button key={emoji} className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded text-lg">
                   {emoji}
                 </button>
